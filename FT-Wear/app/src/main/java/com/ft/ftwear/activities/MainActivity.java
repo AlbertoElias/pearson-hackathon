@@ -3,8 +3,6 @@ package com.ft.ftwear.activities;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,11 +17,10 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.ft.ftwear.ApplicationController;
 import com.ft.ftwear.R;
 import com.ft.ftwear.fragments.ArticleListFragment;
-import com.ft.ftwear.models.ArticleModel;
+import com.ft.ftwear.utils.PrefsHelper;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,13 +28,10 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 
 public class MainActivity extends Activity {
 
-    public static final String EXTRA_MESSAGE = "message";
     public static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
@@ -48,16 +42,17 @@ public class MainActivity extends Activity {
     GoogleCloudMessaging gcm;
     String regid;
     SharedPreferences prefs;
+    PrefsHelper prefsHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        prefs = getSharedPreferences(ApplicationController.PREFS_NAME, Context.MODE_PRIVATE);
+        prefsHelper = new PrefsHelper(this);
         if (savedInstanceState == null) {
             if (checkPlayServices()) {
                 gcm = GoogleCloudMessaging.getInstance(this);
-                regid = getRegistrationId(this);
+                regid = prefsHelper.getRegistrationId();
 
                 if (regid.isEmpty()) {
                     sendRegistrationIdToBackend(this);
@@ -115,47 +110,6 @@ public class MainActivity extends Activity {
         return true;
     }
 
-    /**
-     * Gets the current registration ID for application on GCM service.
-     * <p>
-     * If result is empty, the app needs to register.
-     *
-     * @return registration ID, or empty string if there is no existing
-     *         registration ID.
-     */
-    private String getRegistrationId(Context context) {
-        String registrationId = prefs.getString(PROPERTY_REG_ID, "");
-        if (registrationId.isEmpty()) {
-            Log.i(TAG, "Registration not found.");
-            return "";
-        }
-        // Check if app was updated; if so, it must clear the registration ID
-        // since the existing regID is not guaranteed to work with the new
-        // app version.
-        int registeredVersion = prefs.getInt(PROPERTY_APP_VERSION, Integer.MIN_VALUE);
-        int currentVersion = getAppVersion(context);
-        if (registeredVersion != currentVersion) {
-            Log.i(TAG, "App version changed.");
-            return "";
-        }
-        return registrationId;
-    }
-
-
-    /**
-     * @return Application's version code from the {@code PackageManager}.
-     */
-    private static int getAppVersion(Context context) {
-        try {
-            PackageInfo packageInfo = context.getPackageManager()
-                    .getPackageInfo(context.getPackageName(), 0);
-            return packageInfo.versionCode;
-        } catch (NameNotFoundException e) {
-            // should never happen
-            throw new RuntimeException("Could not get package name: " + e);
-        }
-    }
-
     private void sendRegistrationIdToBackend(final Context context) {
         new AsyncTask<Void,Void,Boolean>() {
             @Override
@@ -183,15 +137,21 @@ public class MainActivity extends Activity {
                             new Response.Listener<JSONObject>() {
                                 @Override
                                 public void onResponse(JSONObject response) {
-                                    storeArticles(response);
-                                    new Handler().post(new Runnable() {
-                                        public void run() {
-                                            storeRegistrationId(context, regid);
-                                            getFragmentManager().beginTransaction()
-                                                    .add(R.id.container, new ArticleListFragment())
-                                                    .commitAllowingStateLoss();
-                                        }
-                                    });
+                                    try {
+                                        JSONArray content = response.getJSONArray("content");
+                                        prefsHelper.storeArticles(content);
+                                        new Handler().post(new Runnable() {
+                                            public void run() {
+                                                prefsHelper.storeRegistrationId(regid);
+                                                getFragmentManager().beginTransaction()
+                                                        .add(R.id.container, new ArticleListFragment())
+                                                        .commitAllowingStateLoss();
+                                            }
+                                        });
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+
                                 }
                             }, new Response.ErrorListener() {
                         @Override
@@ -211,45 +171,5 @@ public class MainActivity extends Activity {
 
     }
 
-    /**
-     * Stores the registration ID and app versionCode in the application's
-     * {@code SharedPreferences}.
-     *
-     * @param context application's context.
-     * @param regId registration ID
-     */
-    private void storeRegistrationId(Context context, String regId) {
-        int appVersion = getAppVersion(context);
-        Log.i(TAG, "Saving regId on app version " + appVersion);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(PROPERTY_REG_ID, regId);
-        editor.putInt(PROPERTY_APP_VERSION, appVersion);
-        editor.commit();
-    }
 
-    private void storeArticles(JSONObject res) {
-        try {
-            SharedPreferences.Editor prefsEditor = prefs.edit();
-            Gson gson = new Gson();
-
-            JSONArray content = res.getJSONArray("content");
-            Set<String> articles = new HashSet<String>();
-            for (int i=0;i<content.length();i++) {
-                JSONObject articleJSON = content.getJSONObject(i);
-                String title = articleJSON.getString("title");
-                String summary = articleJSON.getString("summary");
-                String body = articleJSON.getString("body");
-                String image = articleJSON.getString("image");
-
-                ArticleModel article = new ArticleModel(title, summary, body, image);
-                String json = gson.toJson(article, ArticleModel.class);
-                articles.add(json);
-            }
-            prefsEditor.putStringSet("articles", articles);
-            prefsEditor.commit();
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-    }
 }

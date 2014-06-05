@@ -10,7 +10,10 @@ public class ArticleModel {
     private String body;
     private String image;
 
-    public ArticleModel(String title, String summary, String body, String image) {
+    public ArticleModel(String title, String summary, String image) {
+        this(title, summary, image, "");
+    }
+    public ArticleModel(String title, String summary, String image, String body) {
         this.title = title;
         this.summary = summary;
         this.body = body;
