@@ -21,4 +21,8 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile files('libs/volley.jar')
+    compile files('libs/wearable-preview-support.jar')
+    compile('com.google.android.gms:play-services:+')
+    compile files('libs/gson-2.2.4.jar')
 }
