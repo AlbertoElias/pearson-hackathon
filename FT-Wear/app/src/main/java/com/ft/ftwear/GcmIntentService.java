@@ -33,7 +33,8 @@ public class GcmIntentService extends IntentService {
 
     private final static String TAG = "FT Wear";
     private final static String GROUP_KEY_ARTICLES = "group_key_articles";
-    public static int NOTIFICATION_ID = 1;
+    public static int NOTIFICATION_ID;
+    public static int NOTIFICATION_SUMMARY_ID = 1;
     private NotificationManagerCompat mNotificationManager;
 
     PrefsHelper prefsHelper;
@@ -45,6 +46,7 @@ public class GcmIntentService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         prefsHelper = new PrefsHelper(this);
+        NOTIFICATION_ID = 2;
         GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
         // The getMessageType() intent parameter must be the intent you received
         // in your BroadcastReceiver.
@@ -105,23 +107,22 @@ public class GcmIntentService extends IntentService {
     private void sendNotification(ArticleModel article, int articles) {
         mNotificationManager = NotificationManagerCompat.from(this.getApplicationContext());
 
-        if (NOTIFICATION_ID == 1) {
+        if (NOTIFICATION_ID > 2) {
             Intent summaryIntent = new Intent(this, MainActivity.class);
             PendingIntent listIntent = PendingIntent.getActivity(this, 0,
                     summaryIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-            NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
+            NotificationCompat.Builder mSummaryBuilder = new NotificationCompat.Builder(this)
                     .setContentTitle(getResources().getString(R.string.app_name))
                     .setSmallIcon(R.drawable.ic_activity)
                     .setContentText("You have "+String.valueOf(articles)+" new articles")
                     .setContentIntent(listIntent);
 
-            Notification summaryNotif = new WearableNotifications.Builder(mBuilder)
+            Notification summaryNotif = new WearableNotifications.Builder(mSummaryBuilder)
                     .setGroup(GROUP_KEY_ARTICLES, WearableNotifications.GROUP_ORDER_SUMMARY)
                     .build();
 
-            mNotificationManager.notify(NOTIFICATION_ID, summaryNotif);
-            NOTIFICATION_ID++;
+            mNotificationManager.notify(NOTIFICATION_SUMMARY_ID, summaryNotif);
         }
 
         Intent intent = new Intent(this, MainActivity.class);
@@ -172,16 +173,18 @@ public class GcmIntentService extends IntentService {
                         .bigText(article.getSections()))
                 .build();
 
-        Notification wBuilder = new WearableNotifications.Builder(mBuilder)
+        WearableNotifications.Builder wBuilder = new WearableNotifications.Builder(mBuilder)
                         .addPage(secondPage)
                         .addPage(thirdPage)
                         .addPage(fourthPage)
                         .addPage(fifthPage)
-                        .addPage(sixthPage)
-                        .setGroup(GROUP_KEY_ARTICLES)
-                        .build();
+                        .addPage(sixthPage);
 
-        mNotificationManager.notify(NOTIFICATION_ID, wBuilder);
+        if (articles > 1) {
+            wBuilder.setGroup(GROUP_KEY_ARTICLES);
+        }
+
+        mNotificationManager.notify(NOTIFICATION_ID, wBuilder.build());
         NOTIFICATION_ID++;
     }
 
