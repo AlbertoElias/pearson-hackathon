@@ -116,6 +116,8 @@ public class GcmIntentService extends IntentService {
             NotificationCompat.Builder mSummaryBuilder = new NotificationCompat.Builder(this)
                     .setContentTitle(getResources().getString(R.string.app_name))
                     .setSmallIcon(R.drawable.ic_activity)
+                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),
+                            R.drawable.ic_activity))
                     .setContentText("You have "+String.valueOf(articles)+" new articles")
                     .setContentIntent(listIntent);
 
@@ -139,7 +141,8 @@ public class GcmIntentService extends IntentService {
         Intent shareIntent = new Intent(android.content.Intent.ACTION_SEND);
         shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, article.getTitle());
         shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, article.getSummary());
-        PendingIntent pendingShareIntent = PendingIntent.getActivity(this, 0, shareIntent, 0);
+        PendingIntent pendingShareIntent = PendingIntent.getActivity(this, 0,
+                Intent.createChooser(shareIntent, "Share via"), 0);
 
         WearableNotifications.Action shareAction = new WearableNotifications.Action.Builder(
                 R.drawable.ic_action_share, "Share", pendingShareIntent)
