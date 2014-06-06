@@ -135,11 +135,20 @@ public class GcmIntentService extends IntentService {
                 intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
 
+        // Create intent for share
+        Intent shareIntent = new Intent(android.content.Intent.ACTION_SEND);
+        shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, article.getTitle());
+        shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, article.getSummary());
+        PendingIntent pendingShareIntent = PendingIntent.getActivity(this, 0, shareIntent, 0);
+
+        WearableNotifications.Action shareAction = new WearableNotifications.Action.Builder(
+                R.drawable.ic_action_share, "Share", pendingShareIntent)
+                .build();
 
         // Create the pending intent to fire when the user selects the action
         Intent searchIntent = new Intent("com.ft.ftwear.intent.SEARCH");
         PendingIntent pendingSearchIntent =
-                PendingIntent.getActivity(this, 0, searchIntent, 0);
+                PendingIntent.getBroadcast(this, 0, searchIntent, 0);
 
 // Create the remote input
         RemoteInput searchRemoteInput = new RemoteInput.Builder("search_reply")
@@ -147,8 +156,8 @@ public class GcmIntentService extends IntentService {
                 .build();
 
 // Create the notification action
-        WearableNotifications.Action searchAction = new WearableNotifications.Action.Builder(R.drawable.ic_activity,
-                "Search", pendingSearchIntent)
+        WearableNotifications.Action searchAction = new WearableNotifications.Action.Builder(
+                R.drawable.ic_action_search, "Search", pendingSearchIntent)
                 .addRemoteInput(searchRemoteInput)
                 .build();
 
@@ -198,7 +207,8 @@ public class GcmIntentService extends IntentService {
                         .addPage(fourthPage)
                         .addPage(fifthPage)
                         .addPage(sixthPage)
-                        .addAction(searchAction);
+                        .addAction(searchAction)
+                        .addAction(shareAction);
 
         if (articles > 1) {
             wBuilder.setGroup(GROUP_KEY_ARTICLES);
