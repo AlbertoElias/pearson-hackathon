@@ -33,6 +33,14 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".utils.SearchReceiver">
+            <intent-filter>
+                <action android:name="com.ft.ftwear.intent.SEARCH" />
+            </intent-filter>
+        </receiver>
+
+
         <service android:name=".GcmIntentService" />
 
         <meta-data

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.preview.support.v4.app.NotificationManagerCompat;
+import android.preview.support.wearable.notifications.RemoteInput;
 import android.preview.support.wearable.notifications.WearableNotifications;
 import android.support.v4.app.NotificationCompat;
 
@@ -133,7 +134,23 @@ public class GcmIntentService extends IntentService {
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
                 intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-        //Intent twitter = new Intent(this, )
+
+
+        // Create the pending intent to fire when the user selects the action
+        Intent searchIntent = new Intent("com.ft.ftwear.intent.SEARCH");
+        PendingIntent pendingSearchIntent =
+                PendingIntent.getActivity(this, 0, searchIntent, 0);
+
+// Create the remote input
+        RemoteInput searchRemoteInput = new RemoteInput.Builder("search_reply")
+                .setLabel("Search")
+                .build();
+
+// Create the notification action
+        WearableNotifications.Action searchAction = new WearableNotifications.Action.Builder(R.drawable.ic_activity,
+                "Search", pendingSearchIntent)
+                .addRemoteInput(searchRemoteInput)
+                .build();
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
 
@@ -180,7 +197,8 @@ public class GcmIntentService extends IntentService {
                         .addPage(thirdPage)
                         .addPage(fourthPage)
                         .addPage(fifthPage)
-                        .addPage(sixthPage);
+                        .addPage(sixthPage)
+                        .addAction(searchAction);
 
         if (articles > 1) {
             wBuilder.setGroup(GROUP_KEY_ARTICLES);
