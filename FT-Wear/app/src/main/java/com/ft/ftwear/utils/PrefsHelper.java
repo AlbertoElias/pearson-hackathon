@@ -67,6 +67,7 @@ public class PrefsHelper {
 
             if (articles != null) {
                 articlesList.addAll(articles);
+
                 int l = articlesList.size() - articles.size();
                 for (int i=0;i<l;i++) {
                     articlesList.remove(articlesList.size()-1);
