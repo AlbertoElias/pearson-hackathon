@@ -18,6 +18,7 @@ import java.util.List;
  */
 public class ArticleListFragment extends ListFragment {
 
+    public static final String FRAGMENT_TAG = "ARTICLE_LIST";
     List<ArticleModel> articles;
     ArticlesAdapter articlesAdapter;
     Gson gson;
@@ -49,6 +50,12 @@ public class ArticleListFragment extends ListFragment {
                 .addToBackStack(null)
                 .commit();
 
+    }
+
+    public void updateList() {
+        articles = prefsHelper.getArticles();
+        articlesAdapter.setList(articles);
+        articlesAdapter.notifyDataSetChanged();
     }
 
 }

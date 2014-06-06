@@ -71,4 +71,8 @@ public class ArticlesAdapter  extends BaseAdapter {
         holder.title.setText(article.getTitle());
         return view;
     }
+
+    public void setList(List<ArticleModel> articles) {
+        mList = articles;
+    }
 }

@@ -1,10 +1,13 @@
 package com.ft.ftwear;
 
 import android.app.IntentService;
-import android.app.NotificationManager;
+import android.app.Notification;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.preview.support.v4.app.NotificationManagerCompat;
+import android.preview.support.wearable.notifications.WearableNotifications;
 import android.support.v4.app.NotificationCompat;
 
 import com.android.volley.Response;
@@ -15,10 +18,13 @@ import com.ft.ftwear.activities.MainActivity;
 import com.ft.ftwear.models.ArticleModel;
 import com.ft.ftwear.utils.PrefsHelper;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.net.URL;
 
 /**
  * Created by albertoelias on 05/06/2014.
@@ -26,8 +32,9 @@ import org.json.JSONObject;
 public class GcmIntentService extends IntentService {
 
     private final static String TAG = "FT Wear";
-    public static final int NOTIFICATION_ID = 1;
-    private NotificationManager mNotificationManager;
+    private final static String GROUP_KEY_ARTICLES = "group_key_articles";
+    public static int NOTIFICATION_ID = 1;
+    private NotificationManagerCompat mNotificationManager;
 
     PrefsHelper prefsHelper;
 
@@ -68,7 +75,7 @@ public class GcmIntentService extends IntentService {
             JSONArray articlesJSON = new JSONArray(msg);
             for(int i=0;i<articlesJSON.length();i++) {
                 ArticleModel article = getArticle(articlesJSON.getJSONObject(i));
-                sendNotification(article);
+                sendNotification(article, articlesJSON.length());
             }
             getNewArticles();
         } catch(JSONException e) {
@@ -81,29 +88,111 @@ public class GcmIntentService extends IntentService {
             String title = articleJSON.getString("title");
             String summary = articleJSON.getString("summary");
             String image = articleJSON.getString("image");
-            return new ArticleModel(title, summary, image);
+            ArticleModel article = new ArticleModel(title, summary, image);
+            article.setTags(articleJSON.getJSONArray("tags"));
+            article.setAuthors(articleJSON.getJSONArray("authors"));
+            article.setOrganisations(articleJSON.getJSONArray("organisations"));
+            article.setTopics(articleJSON.getJSONArray("topics"));
+            article.setSections(articleJSON.getJSONArray("sections"));
+
+            return article;
         } catch(JSONException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    private void sendNotification(ArticleModel article) {
-        mNotificationManager = (NotificationManager)
-                this.getSystemService(Context.NOTIFICATION_SERVICE);
+    private void sendNotification(ArticleModel article, int articles) {
+        mNotificationManager = NotificationManagerCompat.from(this.getApplicationContext());
+
+        if (NOTIFICATION_ID == 1) {
+            Intent summaryIntent = new Intent(this, MainActivity.class);
+            PendingIntent listIntent = PendingIntent.getActivity(this, 0,
+                    summaryIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+            NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
+                    .setContentTitle(getResources().getString(R.string.app_name))
+                    .setSmallIcon(R.drawable.ic_activity)
+                    .setContentText("You have "+String.valueOf(articles)+" new articles")
+                    .setContentIntent(listIntent);
+
+            Notification summaryNotif = new WearableNotifications.Builder(mBuilder)
+                    .setGroup(GROUP_KEY_ARTICLES, WearableNotifications.GROUP_ORDER_SUMMARY)
+                    .build();
+
+            mNotificationManager.notify(NOTIFICATION_ID, summaryNotif);
+            NOTIFICATION_ID++;
+        }
+
+        Intent intent = new Intent(this, MainActivity.class);
+        Gson gson = new Gson();
+        String json = gson.toJson(article, ArticleModel.class);
+        intent.putExtra("article", json);
 
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, MainActivity.class), 0);
+                intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
+
                 .setContentTitle(article.getTitle())
                 .setSmallIcon(R.drawable.ic_activity)
+                .setLargeIcon(getBitmap(article.getImage()))
                 .setStyle(new NotificationCompat.BigTextStyle()
-                .bigText(article.getSummary()))
-                .setContentText(article.getSummary());
+                        .bigText(article.getSummary()))
+                .setContentText(article.getSummary())
+                .addAction(R.drawable.ic_activity, "Open", contentIntent);
 
-        mBuilder.setContentIntent(contentIntent);
-        mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+        Notification secondPage = new NotificationCompat.Builder(this)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                    .setBigContentTitle(getResources().getString(R.string.authors))
+                    .bigText(article.getAuthors()))
+                    .build();
+
+        Notification thirdPage = new NotificationCompat.Builder(this)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .setBigContentTitle(getResources().getString(R.string.tags))
+                        .bigText(article.getTags()))
+                .build();
+
+        Notification fourthPage = new NotificationCompat.Builder(this)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .setBigContentTitle(getResources().getString(R.string.organisations))
+                        .bigText(article.getOrganisations()))
+                .build();
+
+        Notification fifthPage = new NotificationCompat.Builder(this)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .setBigContentTitle(getResources().getString(R.string.topics))
+                        .bigText(article.getTopics()))
+                .build();
+
+        Notification sixthPage = new NotificationCompat.Builder(this)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .setBigContentTitle(getResources().getString(R.string.sections))
+                        .bigText(article.getSections()))
+                .build();
+
+        Notification wBuilder = new WearableNotifications.Builder(mBuilder)
+                        .addPage(secondPage)
+                        .addPage(thirdPage)
+                        .addPage(fourthPage)
+                        .addPage(fifthPage)
+                        .addPage(sixthPage)
+                        .setGroup(GROUP_KEY_ARTICLES)
+                        .build();
+
+        mNotificationManager.notify(NOTIFICATION_ID, wBuilder);
+        NOTIFICATION_ID++;
+    }
+
+    private Bitmap getBitmap(String src) {
+        try {
+            URL url = new URL(src);
+            return BitmapFactory.decodeStream(url.openConnection().getInputStream());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private void getNewArticles() {

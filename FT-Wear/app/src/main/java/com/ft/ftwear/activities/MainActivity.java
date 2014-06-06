@@ -2,6 +2,7 @@ package com.ft.ftwear.activities;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.ft.ftwear.ApplicationController;
 import com.ft.ftwear.R;
+import com.ft.ftwear.fragments.ArticleFragment;
 import com.ft.ftwear.fragments.ArticleListFragment;
 import com.ft.ftwear.utils.PrefsHelper;
 import com.google.android.gms.common.ConnectionResult;
@@ -49,7 +51,16 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         prefsHelper = new PrefsHelper(this);
-        if (savedInstanceState == null) {
+        Intent intent = getIntent();
+        Bundle bundle = intent.getExtras();
+        if (bundle != null) {
+            ArticleFragment articleFragment = new ArticleFragment();
+            articleFragment.setArguments(intent.getExtras());
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.container, articleFragment)
+                    .addToBackStack(null)
+                    .commit();
+        } else {
             if (checkPlayServices()) {
                 gcm = GoogleCloudMessaging.getInstance(this);
                 regid = prefsHelper.getRegistrationId();

@@ -53,13 +53,20 @@ public class PrefsHelper {
                 String image = articleJSON.getString("image");
 
                 ArticleModel article = new ArticleModel(title, summary, image, body);
+                article.setTags(articleJSON.getJSONArray("tags"));
+                article.setAuthors(articleJSON.getJSONArray("authors"));
+                article.setOrganisations(articleJSON.getJSONArray("organisations"));
+                article.setTopics(articleJSON.getJSONArray("topics"));
+                article.setSections(articleJSON.getJSONArray("sections"));
+
                 String json = gson.toJson(article, ArticleModel.class);
                 articlesList.add(json);
             }
 
             if (articles != null) {
                 articlesList.addAll(articles);
-                for (int i=0;i<length;i++) {
+                int l = articlesList.size() - articles.size();
+                for (int i=0;i<l;i++) {
                     articlesList.remove(articlesList.size()-1);
                 }
             }
@@ -76,7 +83,8 @@ public class PrefsHelper {
 
     public List<ArticleModel> getArticles() {
         List<ArticleModel>  articles = new ArrayList<ArticleModel>();
-        ArrayList<String> jsonArray = new ArrayList<String>();        jsonArray.addAll(prefs.getStringSet("articles", null));
+        ArrayList<String> jsonArray = new ArrayList<String>();
+        jsonArray.addAll(prefs.getStringSet("articles", null));
         for (String json : jsonArray) {
             ArticleModel article = gson.fromJson(json, ArticleModel.class);
             articles.add(article);
