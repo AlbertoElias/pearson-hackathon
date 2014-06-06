@@ -26,6 +26,8 @@ public class PrefsHelper {
 
     public static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_APP_VERSION = "appVersion";
+    private static final String PROPERTY_TWITTER_KEY = "consumer_key";
+    private static final String PROPERTY_TWITTER_SECRET = "consumer_secret_key";
     private final static String TAG = "FT Wear";
 
     SharedPreferences prefs;
@@ -129,5 +131,24 @@ public class PrefsHelper {
         editor.putString(PROPERTY_REG_ID, regId);
         editor.putInt(PROPERTY_APP_VERSION, appVersion);
         editor.commit();
+    }
+
+    public void storeTwitterCredentials(String key, String secret) {
+        SharedPreferences.Editor editor = prefs.edit();
+        if (getTwitterConsumerKey().isEmpty()) {
+            editor.putString(PROPERTY_TWITTER_KEY, key);
+        }
+        if (getTwitterSecretKey().isEmpty()) {
+            editor.putString(PROPERTY_TWITTER_SECRET, secret);
+        }
+        editor.commit();
+    }
+
+    public String getTwitterConsumerKey() {
+        return prefs.getString(PROPERTY_TWITTER_KEY, "");
+    }
+
+    public String getTwitterSecretKey() {
+        return prefs.getString(PROPERTY_TWITTER_SECRET, "");
     }
 }

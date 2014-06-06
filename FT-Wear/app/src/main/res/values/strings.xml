@@ -3,11 +3,12 @@
 
     <string name="app_name">FT Wear</string>
     <string name="action_settings">Settings</string>
-
     <string name="authors">Authors</string>
     <string name="tags">Tags</string>
     <string name="organisations">Organisations</string>
     <string name="topics">Topics</string>
     <string name="sections">Sections</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+    <string name="signin">Sign in to Twitter</string>
 
 </resources>

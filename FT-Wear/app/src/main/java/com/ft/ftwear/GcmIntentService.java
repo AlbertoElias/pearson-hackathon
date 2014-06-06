@@ -133,6 +133,8 @@ public class GcmIntentService extends IntentService {
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
                 intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
+        //Intent twitter = new Intent(this, )
+
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
 
                 .setContentTitle(article.getTitle())
@@ -141,7 +143,7 @@ public class GcmIntentService extends IntentService {
                 .setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(article.getSummary()))
                 .setContentText(article.getSummary())
-                .addAction(R.drawable.ic_activity, "Open", contentIntent);
+                .setContentIntent(contentIntent);
 
         Notification secondPage = new NotificationCompat.Builder(this)
                 .setStyle(new NotificationCompat.BigTextStyle()

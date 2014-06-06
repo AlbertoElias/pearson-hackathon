@@ -20,6 +20,9 @@ public class ApplicationController extends Application {
     public static final String Url = "http://pearson-hackday.herokuapp.com";
     public static final String PREFS_NAME = "FTWearPrefs";
 
+    public static final String CONSUMER_KEY = "Zk7NeRDwzSh9zMHecFl1BxjIO";
+    public static final String CONSUMER_SECRET_KEY = "VRnh73zPnRXh0JS5nzNfwqZrfcV5iOVIPxSPqeOW32J0aGV0y0";
+
     /**
      * Global request queue for Volley
      */

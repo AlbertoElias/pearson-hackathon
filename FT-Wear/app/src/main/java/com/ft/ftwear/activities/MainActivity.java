@@ -50,7 +50,12 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
         prefsHelper = new PrefsHelper(this);
+        prefsHelper.storeTwitterCredentials(ApplicationController.CONSUMER_KEY,
+                ApplicationController.CONSUMER_SECRET_KEY);
+
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();
         if (bundle != null) {
